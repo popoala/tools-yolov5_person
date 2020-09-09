@@ -4,7 +4,7 @@ data=$1  # root dir of clusters or shots
 outdir=${data}_person
 outimgdir=${data}_person_dropimg
 
-
+:<<EOF
 for i in `ls $data`;do  # for each class-dir
     echo $i
     if [ -d ${data}/${i} ]; then
@@ -13,6 +13,6 @@ for i in `ls $data`;do  # for each class-dir
     fi
 
 done
-
+EOF
 
 python get_class_nonperson_imgdir.py ${outdir} ${data} ${outimgdir}

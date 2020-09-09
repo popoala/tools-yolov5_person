@@ -7,7 +7,7 @@ import shutil
 osp = os.path
 
 shotlabels = ["far","full","human_full","human_upeer","human_face","nonhuman","human_crow"]
-badlabels = [2,3,4]
+badlabels = [2,3,4,6]
 
 ## img of label 2 3 & 4 is not kept
 def get_nonperson_class(txt_root, img_root, out_dir):
@@ -57,9 +57,9 @@ def get_nonperson_class(txt_root, img_root, out_dir):
                 ratio = max_h / max_w if max_h > max_w else max_w/max_h
                 
                 ## get determine label
-                if len(lines) > 5:
+                if len(lines) > 5 and max_a<0.2:
                     imglabel_list.append(6)  #crow
-                elif max_a > 0.2:
+                elif max_a >= 0.2:
                     if ratio < 2:
                         imglabel_list.append(4)  # human_face
                     elif ratio < 4:
