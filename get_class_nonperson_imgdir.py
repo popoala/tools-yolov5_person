@@ -10,7 +10,7 @@ shotlabels = ["far","full","human_full","human_upeer","human_face","nonhuman","h
 badlabels = [2,3,4,6]
 
 
-def determine_distance(N, max_w, max_h, max_a, imglabel_list):
+def determine_distance(N, max_w, max_h, max_a, imglabel_list,txt):
     ratio = max_h / max_w if max_h > max_w else max_w/max_h
     ## get determine label
     if N > 5 and max_a<0.2:
@@ -96,7 +96,7 @@ def get_nonperson_class(txt_root, img_root, out_dir):
                 max_h = h_list[max_i]
                 max_a = area_list[max_i]
                 
-                imglabel_list = determine_distance(len(lines), max_w, max_h, max_a, imglabel_list)
+                imglabel_list = determine_distance(len(lines), max_w, max_h, max_a, imglabel_list,txt)
                 
                 #print(imgname,txt, len(lines), imglabel_list[-1])
                 ## save image

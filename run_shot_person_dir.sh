@@ -9,7 +9,7 @@ outimgdir=${data}_person_dropshot
 for i in `ls $data`;do   
     echo $i
     if [ -d ${data}/${i} ]; then
-        python detect_person_shot.py --save-txt --classes 0 --source ${data}/${i}  --output ${outdir}/${i}
+        python detect_person.py --save-txt --source ${data}/${i}  --output ${outdir}/${i}
 
     fi
 
