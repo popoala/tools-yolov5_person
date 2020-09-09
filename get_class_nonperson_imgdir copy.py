@@ -4,14 +4,13 @@ import sys
 import glob
 import numpy as np
 import shutil
-from get_class_nonperson_imgdir import determine_distance
 osp = os.path
 
 shotlabels = ["far","full","human_full","human_upeer","human_face","nonhuman","human_crow"]
+badlabels = [2,3,4,6]
 
-labels_add = [0,0,1,2,3,0,1]
-
-def get_nonperson_img(txt_root, img_root, out_dir):
+## img of label 2 3 & 4 is not kept
+def get_nonperson_class(txt_root, img_root, out_dir):
     #import pdb;pdb.set_trace()
     dir_list = os.listdir(img_root)
     dir_list = [ii for ii in dir_list if os.path.isdir(osp.join(img_root, ii))]
@@ -21,16 +20,32 @@ def get_nonperson_img(txt_root, img_root, out_dir):
     for dir in dir_list:
         #import pdb;pdb.set_trace()
         dir_path = osp.join(txt_root, dir)
+        ## no human
         if not osp.exists(dir_path):
             print(dir_path)
             shotinx = 5
+            if not osp.exists(osp.join(out_dir)):
+                os.makedirs(osp.join(out_dir))
+            shutil.copytree(osp.join(img_root, dir), osp.join(out_dir,dir))
         else:
-            ## determin by each img in shot
+            this_dir = osp.join(out_dir,dir)
+            thisimg_dir = osp.join(img_root,dir)
+            imgname_list = os.listdir(thisimg_dir)
+            imgname_list = [ii.replace(".jpg","") for ii in imgname_list if ii.endswith(".jpg")]
+            #import pdb;pdb.set_trace()
+            ## determin each img in shot
             txt_list = glob.glob(dir_path+"/*.txt")
-            isperson_list = [0]*len(txt_list)
+            txtname_list = [osp.basename(ii).replace(".txt","") for ii in txt_list if ii.endswith(".txt")]
             imglabel_list = []
-            # for each img in this shot, save isperson, and get_shot labels
-            for txt in txt_list:
+            # for each img in this shot
+            for imgname in imgname_list:
+                if imgname not in txtname_list:
+                    if not osp.exists(this_dir):
+                        os.makedirs(this_dir)
+                    shutil.copy(osp.join(thisimg_dir, imgname+".jpg"), osp.join(this_dir, imgname+".jpg"))
+                    continue
+
+                txt = txt_list[txtname_list.index(imgname)]
                 lines = open(txt).readlines()
                 w_list = np.array([float(i.strip().split()[3]) for i in lines])
                 h_list = np.array([float(i.strip().split()[3]) for i in lines])
@@ -39,11 +54,12 @@ def get_nonperson_img(txt_root, img_root, out_dir):
                 max_w = w_list[max_i]
                 max_h = h_list[max_i]
                 max_a = area_list[max_i]
-                """
                 ratio = max_h / max_w if max_h > max_w else max_w/max_h
-                if len(lines) > 5:
+                
+                ## get determine label
+                if len(lines) > 5 and max_a<0.2:
                     imglabel_list.append(6)  #crow
-                elif max_a > 0.2:
+                elif max_a >= 0.2:
                     if ratio < 2:
                         imglabel_list.append(4)  # human_face
                     elif ratio < 4:
@@ -52,8 +68,8 @@ def get_nonperson_img(txt_root, img_root, out_dir):
                         imglabel_list.append(2)  # human_full
                     else:
                         imglabel_list.append(1)  # full
-                elif max_a > 0.1:
-                    if max_w > 0.7 or max_h > 0.7:
+                elif max_a > 0.05:
+                    if max_w > 0.1 or max_h > 0.1:
                         if ratio < 2:
                             imglabel_list.append(4)  # human_face, not necessary
                         elif ratio < 4:
@@ -64,44 +80,35 @@ def get_nonperson_img(txt_root, img_root, out_dir):
                             imglabel_list.append(1)  # full
 
                     else:
-                        if ratio > 4:
-                            imglabel_list.append(1)  # full
-                        else:  # maybe cuted
-                            print("warning ratio:",txt, max_w, max_h, max_a)
+                        print("warning ratio:",txt, max_w, max_h, max_a)
+                        if ratio < 3:
+                            imglabel_list.append(3)  # full
+                        elif ratio < 6:  # maybe cuted
+                            imglabel_list.append(2)  # human_full
+                        else:
                             imglabel_list.append(1)  # full
                 else:
                     print("warning ratio:",txt, max_w, max_h, max_a)
-                    imglabel_list.append(1)  # ful
-                """
-                #imgname = os.path.basename(txt).replace(".txt","")
-                #print(imgname)
-                #if imgname == "c0861jse3ge_2811_2850_4" or imgname=="b08614izm4x_387_426_4":
-                #    import pdb;pdb.set_trace()
-                imglabel_list = determine_distance(len(lines), max_w, max_h, max_a, imglabel_list)
+                    imglabel_list.append(1)  # full
                 
-            
-            img_cnt = len(glob.glob("%s/%s/*.jpg"%(img_root,dir)))
-            if len(imglabel_list) < img_cnt:
-                imglabel_list.extend([5]*(img_cnt - len(imglabel_list)))
-            imglabel_list = np.array(imglabel_list)
-            counts = np.bincount(imglabel_list)
-            sort_inds = counts.argsort()
-            if counts[sort_inds[-1]] < counts[sort_inds[-2]]+1:
-                print(txt,"add weight before:",counts)
-                counts = counts+labels_add[:len(counts)]
-                print("after weight", counts)
-            shotinx = np.argmax(counts)
-
-        if not osp.exists(osp.join(out_dir,shotlabels[shotinx])):
-            os.makedirs(osp.join(out_dir,shotlabels[shotinx]))
-        shutil.copytree(osp.join(img_root, dir), osp.join(out_dir,shotlabels[shotinx], dir))
+                #print(imgname,txt, len(lines), imglabel_list[-1])
+                ## save image
+                if imglabel_list[-1] in badlabels:
+                    #print("droping ",imgname)
+                    continue
+                else:
+                    if not osp.exists(this_dir):
+                        os.makedirs(this_dir)
+                    print("save ",imgname, txt, len(lines), imglabel_list[-1])
+                    shutil.copy(osp.join(thisimg_dir, imgname+".jpg"), osp.join(this_dir, imgname+".jpg"))
+        
 
             
 if __name__ =="__main__":    
     txt_root = sys.argv[1]
     img_root = sys.argv[2]
     out_dir = sys.argv[3]
-    get_nonperson_img(txt_root, img_root, out_dir)
+    get_nonperson_class(txt_root, img_root, out_dir)
 
 
 

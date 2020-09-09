@@ -4,6 +4,7 @@ data=$1  # root dir of clusters or shots
 outdir=${data}_person
 outimgdir=${data}_person_dropshot
 
+:<<EOF
 # do video shot person detection, determine far/full/detail etc
 for i in `ls $data`;do   
     echo $i
@@ -13,5 +14,5 @@ for i in `ls $data`;do
     fi
 
 done
-
+EOF
 python get_shot_nonperson_imgdir.py ${outdir} ${data} ${outimgdir}

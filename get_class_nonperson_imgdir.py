@@ -9,6 +9,47 @@ osp = os.path
 shotlabels = ["far","full","human_full","human_upeer","human_face","nonhuman","human_crow"]
 badlabels = [2,3,4,6]
 
+
+def determine_distance(N, max_w, max_h, max_a, imglabel_list):
+    ratio = max_h / max_w if max_h > max_w else max_w/max_h
+    ## get determine label
+    if N > 5 and max_a<0.2:
+        imglabel_list.append(6)  #crow
+    elif max_a >= 0.2:
+        if ratio < 2:
+            imglabel_list.append(4)  # human_face
+        elif ratio < 4:
+            imglabel_list.append(3)  # human_upper
+        elif ratio < 6:
+            imglabel_list.append(2)  # human_full
+        else:
+            imglabel_list.append(1)  # full
+    elif max_a > 0.05:
+        if max_w > 0.1 or max_h > 0.1:
+            if ratio < 2:
+                imglabel_list.append(4)  # human_face, not necessary
+            elif ratio < 4:
+                imglabel_list.append(3)  # human_u
+            elif ratio < 6:
+                imglabel_list.append(2)  # human_full
+            else:
+                imglabel_list.append(1)  # full
+
+        else:
+            print("warning ratio:",txt, max_w, max_h, max_a)
+            if ratio < 3:
+                imglabel_list.append(3)  # full
+            elif ratio < 6:  # maybe cuted
+                imglabel_list.append(2)  # human_full
+            else:
+                imglabel_list.append(1)  # full
+    else:
+        print("warning ratio:",txt, max_w, max_h, max_a)
+        imglabel_list.append(1)  # full
+    return imglabel_list
+    
+
+
 ## img of label 2 3 & 4 is not kept
 def get_nonperson_class(txt_root, img_root, out_dir):
     #import pdb;pdb.set_trace()
@@ -54,42 +95,8 @@ def get_nonperson_class(txt_root, img_root, out_dir):
                 max_w = w_list[max_i]
                 max_h = h_list[max_i]
                 max_a = area_list[max_i]
-                ratio = max_h / max_w if max_h > max_w else max_w/max_h
                 
-                ## get determine label
-                if len(lines) > 5 and max_a<0.2:
-                    imglabel_list.append(6)  #crow
-                elif max_a >= 0.2:
-                    if ratio < 2:
-                        imglabel_list.append(4)  # human_face
-                    elif ratio < 4:
-                        imglabel_list.append(3)  # human_upper
-                    elif ratio < 6:
-                        imglabel_list.append(2)  # human_full
-                    else:
-                        imglabel_list.append(1)  # full
-                elif max_a > 0.05:
-                    if max_w > 0.1 or max_h > 0.1:
-                        if ratio < 2:
-                            imglabel_list.append(4)  # human_face, not necessary
-                        elif ratio < 4:
-                            imglabel_list.append(3)  # human_u
-                        elif ratio < 6:
-                            imglabel_list.append(2)  # human_full
-                        else:
-                            imglabel_list.append(1)  # full
-
-                    else:
-                        print("warning ratio:",txt, max_w, max_h, max_a)
-                        if ratio < 3:
-                            imglabel_list.append(3)  # full
-                        elif ratio < 6:  # maybe cuted
-                            imglabel_list.append(2)  # human_full
-                        else:
-                            imglabel_list.append(1)  # full
-                else:
-                    print("warning ratio:",txt, max_w, max_h, max_a)
-                    imglabel_list.append(1)  # full
+                imglabel_list = determine_distance(len(lines), max_w, max_h, max_a, imglabel_list)
                 
                 #print(imgname,txt, len(lines), imglabel_list[-1])
                 ## save image

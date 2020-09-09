@@ -4,7 +4,6 @@ import sys
 import glob
 import numpy as np
 import shutil
-from get_class_nonperson_imgdir import determine_distance
 osp = os.path
 
 shotlabels = ["far","full","human_full","human_upeer","human_face","nonhuman","human_crow"]
@@ -39,7 +38,6 @@ def get_nonperson_img(txt_root, img_root, out_dir):
                 max_w = w_list[max_i]
                 max_h = h_list[max_i]
                 max_a = area_list[max_i]
-                """
                 ratio = max_h / max_w if max_h > max_w else max_w/max_h
                 if len(lines) > 5:
                     imglabel_list.append(6)  #crow
@@ -71,23 +69,17 @@ def get_nonperson_img(txt_root, img_root, out_dir):
                             imglabel_list.append(1)  # full
                 else:
                     print("warning ratio:",txt, max_w, max_h, max_a)
-                    imglabel_list.append(1)  # ful
-                """
-                #imgname = os.path.basename(txt).replace(".txt","")
-                #print(imgname)
-                #if imgname == "c0861jse3ge_2811_2850_4" or imgname=="b08614izm4x_387_426_4":
-                #    import pdb;pdb.set_trace()
-                imglabel_list = determine_distance(len(lines), max_w, max_h, max_a, imglabel_list)
-                
+                    imglabel_list.append(1)  # full
             
             img_cnt = len(glob.glob("%s/%s/*.jpg"%(img_root,dir)))
             if len(imglabel_list) < img_cnt:
                 imglabel_list.extend([5]*(img_cnt - len(imglabel_list)))
             imglabel_list = np.array(imglabel_list)
+            print(txt, imglabel_list)
             counts = np.bincount(imglabel_list)
             sort_inds = counts.argsort()
             if counts[sort_inds[-1]] < counts[sort_inds[-2]]+1:
-                print(txt,"add weight before:",counts)
+                print(counts)
                 counts = counts+labels_add[:len(counts)]
                 print("after weight", counts)
             shotinx = np.argmax(counts)
