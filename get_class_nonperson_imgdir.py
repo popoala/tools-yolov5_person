@@ -7,7 +7,7 @@ import shutil
 osp = os.path
 
 shotlabels = ["far","full","human_full","human_upeer","human_face","nonhuman","human_crow"]
-badlabels = [2,3,4,6]
+badlabels = [2,3,4,6]  #humanfull/ upper/ face/crow
 
 
 def determine_distance(N, max_w, max_h, max_a, imglabel_list,txt):
